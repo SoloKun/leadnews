@@ -58,8 +58,6 @@
         <elasticsearch.version>7.4.2</elasticsearch.version>
         <ali.core.version>4.1.1</ali.core.version>
         <ali.green.version>3.4.1</ali.green.version>
-        <kafka.version>2.5.4.RELEASE</kafka.version>
-        <kafka.client.version>2.5.0</kafka.client.version>
         <reflections.version>0.9.11</reflections.version>
         <swagger.version>2.9.2</swagger.version>
         <knife4j.version>2.0.2</knife4j.version>
@@ -76,17 +74,6 @@
     </dependencies>
     <dependencyManagement>
         <dependencies>
-            <!--内部依赖工程-->
-            <dependency>
-                <artifactId>heima-leadnews-apis</artifactId>
-                <groupId>com.heima</groupId>
-                <version>${project.version}</version>
-            </dependency>
-           <!-- <dependency>
-                <artifactId>heima-leadnews-feign</artifactId>
-                <groupId>com.heima</groupId>
-                <version>${project.version}</version>
-            </dependency>-->
             <dependency>
                 <artifactId>heima-leadnews-common</artifactId>
                 <groupId>com.heima</groupId>
@@ -227,29 +214,6 @@
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${elasticsearch.version}</version>
-            </dependency>
-            <!-- kafkfa -->
-            <dependency>
-                <groupId>org.springframework.kafka</groupId>
-                <artifactId>spring-kafka</artifactId>
-                <version>${kafka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.kafka</groupId>
-                <artifactId>kafka-streams</artifactId>
-                <version>${kafka.client.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>connect-json</artifactId>
-                        <groupId>org.apache.kafka</groupId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.kafka</groupId>
-                <artifactId>kafka-clients</artifactId>
-                <version>${kafka.client.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.xiaoymin</groupId>

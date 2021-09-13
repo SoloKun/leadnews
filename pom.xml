@@ -26,8 +26,9 @@
     </parent>
     <properties>
         <spring.boot.version>2.3.2.RELEASE</spring.boot.version>
+        <seata.version>1.4.2</seata.version>
         <spring.cloud.version>Hoxton.SR8</spring.cloud.version>
-        <com.alibaba.cloud>2.1.0.RELEASE</com.alibaba.cloud>
+        <com.alibaba.cloud>2.2.1.RELEASE</com.alibaba.cloud>
         <!-- 项目源码及编译输出的编码 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

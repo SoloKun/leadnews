@@ -89,6 +89,13 @@ public class ResponseResult<T> implements Serializable {
         return this;
     }
 
+    public boolean checkCode() {
+        if(this.getCode().intValue() != 0){
+            return false;
+        }
+        return true;
+    }
+
     public static void main(String[] args) {
         System.out.println("成功的响应:");
         System.out.println( JSON.toJSONString(ResponseResult.okResult()));

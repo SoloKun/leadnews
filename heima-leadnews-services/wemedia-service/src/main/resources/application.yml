@@ -1,0 +1,33 @@
+#server:
+#  port: 9004
+#spring:
+#  datasource:
+#    driver-class-name: com.mysql.jdbc.Driver
+#    url: jdbc:mysql://${spring.profiles.ip}:3306/leadnews_wemedia?useUnicode=true&useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+#    username: root
+#    password: root
+#  rabbitmq:
+#    host: ${spring.profiles.ip}
+#    port: 5672
+#    username: admin
+#    password: admin
+#    publisher-confirm-type: correlated  # 开启确认机制回调 必须配置这个才会确认回调
+#    publisher-returns: true # 开启return机制回调
+#    listener:
+#      simple:
+#        acknowledge-mode: manual #手动确认
+#        # acknowledge-mode: auto #自动确认    manual #手动确认
+#        # 重试策略相关配置
+#        retry:
+#          enabled: true # 是否开启重试功能
+#          max-attempts: 5 # 最大重试次数
+#          # 时间策略乘数因子   0  1  2  4  8
+#          # 时间策略乘数因子
+#          multiplier: 2.0
+#          initial-interval: 1000ms # 第一次调用后的等待时间
+#          max-interval: 20000ms # 最大等待的时间值
+## 设置Mapper接口所对应的XML文件位置，如果你在Mapper接口中有自定义方法，需要进行该配置
+#mybatis-plus:
+#  mapper-locations: classpath*:mapper/*.xml
+#  # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
+#  type-aliases-package: com.heima.model.media.pojos

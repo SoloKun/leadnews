@@ -113,7 +113,6 @@ public class AppJwtUtil {
             }
         } catch (Exception e) {
             e.printStackTrace();
-
             System.out.println("解析token失败");
         }
     }

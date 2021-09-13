@@ -10,12 +10,4 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>heima-leadnews-basic</artifactId>
     <packaging>pom</packaging>
-    <modules>
-        <module>heima-knife4j-spring-boot-starter</module>
-        <module>heima-exception-spring-boot-starter</module>
-        <module>heima-file-spring-boot-starter</module>
-        <module>heima-aliyunsecurity-spring-boot-starter</module>
-        <module>heima-cache-spring-boot-starter</module>
-        <module>heima-es-spring-boot-starter</module>
-    </modules>
 </project>

@@ -9,7 +9,7 @@
 
 
 
-- SpringBoot 2.3.2
+- SpringBoot 2.3.9
 - SpringCloud Hoxton.SR8
 - 	Gateway 网关组件
 - 	Feign Http服务调用组件
@@ -25,7 +25,7 @@
 - 阿里云OSS分布式存储
 - DFA敏感词过滤
 - 	自定义敏感词库的算法过滤处理
-- kafka + zookeeper + kafka Stream
+- RabbitMQ
 - 	用于消息队列，及收集用户实时对文章的操作数据，流式处理数据
 - Redis缓存数据库
 - MySQL关系型数据库

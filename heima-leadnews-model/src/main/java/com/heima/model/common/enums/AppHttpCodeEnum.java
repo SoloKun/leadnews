@@ -1,5 +1,12 @@
 package com.heima.model.common.enums;
 
+
+/**
+ * ClassName: AppHttpCodeEnum
+ * Package: com.heima.model.common.enums
+ * Description:
+ * 定义了一些常用的状态码
+ * */
 public enum AppHttpCodeEnum {
 
     // 成功段0

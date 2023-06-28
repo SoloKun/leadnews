@@ -80,3 +80,4 @@ buildNumber.properties
 .metadata
 node_modules
 node_modules/
+/heima-leadnews-test/

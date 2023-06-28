@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 分页查询： 返回PageResponseResult
+ * 分页查询： 返回PageResponseResult,用于返回分页数据
  */
 @Data
 public class PageResponseResult extends ResponseResult implements Serializable {

@@ -7,7 +7,25 @@
         <groupId>com.heima</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
+    <modules>
+        <module>aliyun-oss-demo</module>
+        <module>aliyun-green-demo</module>
+        <module>freemaker-demo</module>
+    </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>heima-leadnews-test</artifactId>
     <packaging>pom</packaging>
+
+    <dependencies>
+        <dependency>
+        <groupId>com.aliyun.oss</groupId>
+        <artifactId>aliyun-sdk-oss</artifactId>
+        <version>3.10.2</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.2</version>
+        </dependency>
+    </dependencies>
 </project>

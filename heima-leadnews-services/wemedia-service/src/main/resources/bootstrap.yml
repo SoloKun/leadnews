@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: leadnews-wemedia # 服务名称
+  profiles:
+    active: dev # 开发环境配置
+    ip: 192.168.199.115  # 环境ip地址
+  cloud:
+    nacos:
+      server-addr: ${spring.profiles.ip}:8848
+      discovery: # 注册中心地址配置
+        namespace: ${spring.profiles.active}
+      config: # 配置中心地址配置
+        namespace: ${spring.profiles.active}
+        file-extension: yml # data-id 后缀
+        name: ${spring.application.name} # data-id名称
+        shared-configs: # 共享配置
+          - data-id: share-feign.yml
+            refresh: false
+            group: DEFAULT_GROUP
+          - data-id: share-seata.yml
+            refresh: false
+            group: DEFAULT_GROUP
+          - data-id: share-file.yml
+            refresh: false
+            group: DEFAULT_GROUP
+          - data-id: share-rabbit.yml
+            group: DEFAULT_GROUP
+            refresh: false
+servlet:
+  multipart:
+    max-file-size: 5MB
+mybatis-plus:
+configuration:
+  log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

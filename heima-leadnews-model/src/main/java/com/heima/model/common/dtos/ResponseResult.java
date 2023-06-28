@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 通用的结果返回类
+ * 通用的结果返回类，返回json数据
  * @param <T>
  */
 @Setter

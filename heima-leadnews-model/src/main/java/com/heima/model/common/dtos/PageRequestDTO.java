@@ -4,14 +4,11 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 分页查询参数
- * 查询频道列表   频道名称  page   size
- *                      page   size
- *
- *
- *             ChannelDto extends PageRequestDto {  频道名称 }
- *
- */
+ * ClassName: PageRequestDTO
+ * Package: com.heima.model.common.dtos
+ * Description:
+ * 用于封装分页请求参数，继承该类的子类可以直接使用分页参数。
+ **/
 @Data
 @Slf4j
 public class PageRequestDTO {

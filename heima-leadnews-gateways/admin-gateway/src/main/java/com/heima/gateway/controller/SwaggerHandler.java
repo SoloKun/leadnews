@@ -22,6 +22,7 @@ import java.util.Optional;
 public class SwaggerHandler {
     @Autowired(required = false)
     private SecurityConfiguration securityConfiguration;
+    // 用于配置swagger的UI界面
     @Autowired(required = false)
     private UiConfiguration uiConfiguration;
     private final SwaggerResourcesProvider swaggerResources;

@@ -11,26 +11,36 @@ import com.heima.common.exception.CustException;
 import com.heima.feigns.AdminFeign;
 import com.heima.feigns.WemediaFeign;
 import com.heima.model.admin.pojos.AdChannel;
+import com.heima.model.article.dtos.ArticleHomeDTO;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.constants.article.ArticleConstants;
 import com.heima.model.constants.wemedia.WemediaConstants;
 import com.heima.model.wemedia.pojos.WmNews;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
 public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle> implements ApArticleService {
     @Autowired
     private WemediaFeign wemediaFeign;
+    @Autowired
+    private GeneratePageServiceImpl generatePageService;
     @GlobalTransactional(rollbackFor = Exception.class,timeoutMills = 300000)
-
     @Override
     public void publishArticle(Integer newsId) {
         if(newsId==null){
@@ -44,12 +54,60 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         saveOrUpdateArticle(apArticle);
         //保存关联配置和文章内容
         saveConfigAndContent(wmNews, apArticle);
-        //TODO 页面静态化
-
+        //页面静态化
+        generatePageService.generateArticlePage(wmNews.getContent(),apArticle);
         //更新wmNews
         updateWmNews(newsId, wmNews, apArticle);
         // CustException.cust(AppHttpCodeEnum.SUCCESS); 测试全局事务
         //TODO 通知es索引库添加文章索引 
+    }
+
+    /**
+     * app端加载文章
+     * @param loadtype
+     * @param dto loadtype 0：加载更多   1：加载最新
+     * @return
+     */
+    @Autowired
+    private ApArticleMapper apArticleMapper;
+    @Value("${file.oss.web-site}")
+    private String webSite;
+    @Value("${file.minio.readPath}")
+    private String readPath;
+    @Override
+    public ResponseResult load(Short loadtype, ArticleHomeDTO dto) {
+        Integer size = dto.getSize();
+        if(size==null||size<=0){
+            size=10;
+        }
+        dto.setSize(size);
+        if(StringUtils.isBlank(dto.getTag())){
+            dto.setTag(ArticleConstants.DEFAULT_TAG);
+        }
+        if(dto.getMaxBehotTime()==null){
+            dto.setMaxBehotTime(new Date());
+        }
+        if(dto.getMinBehotTime()==null){
+            dto.setMinBehotTime(new Date());
+        }
+        //根据loadtype判断加载类型
+        if(!loadtype.equals(ArticleConstants.LOADTYPE_LOAD_MORE)
+                &&!loadtype.equals(ArticleConstants.LOADTYPE_LOAD_NEW)){
+            loadtype=ArticleConstants.LOADTYPE_LOAD_MORE;
+        }
+        List<ApArticle> apArticles = apArticleMapper.loadArticleList(dto,loadtype);
+        for(ApArticle apArticle:apArticles){
+            String images = apArticle.getImages();
+            if(StringUtils.isNotBlank(images)){
+                images = Arrays.stream(images.split(","))
+                        .map(url ->webSite+url)
+                        .collect(Collectors.joining(","));
+                apArticle.setImages(images);
+            }
+            apArticle.setStaticUrl(readPath+apArticle.getStaticUrl());
+        }
+        ResponseResult responseResult = ResponseResult.okResult(apArticles);
+        return responseResult;
     }
 
     /**

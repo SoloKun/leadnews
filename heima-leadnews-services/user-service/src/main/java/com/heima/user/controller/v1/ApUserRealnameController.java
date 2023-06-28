@@ -3,6 +3,8 @@ package com.heima.user.controller.v1;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.constants.admin.AdminConstants;
 import com.heima.model.user.dtos.AuthDTO;
+import com.heima.model.user.dtos.LoginDTO;
+import com.heima.user.service.ApUserLoginService;
 import com.heima.user.service.impl.ApUserRealnameServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -47,6 +49,7 @@ public class ApUserRealnameController {
     public ResponseResult authFail(@RequestBody AuthDTO DTO) {
         return apUserRealnameServiceimpl.updateStatusById(DTO, AdminConstants.FAIL_AUTH);
     }
+
 
 
 }

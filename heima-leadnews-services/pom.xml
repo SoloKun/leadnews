@@ -12,6 +12,7 @@
         <module>user-service</module>
         <module>wemedia-service</module>
         <module>article-service</module>
+        <module>behavior-service</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 

@@ -1,6 +1,7 @@
 package com.heima.feigns.fallback;
 
 import com.heima.feigns.ArticleFeign;
+import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
@@ -36,6 +37,13 @@ public class ArticleFeignFallback implements FallbackFactory<ArticleFeign> {
             @Override
             public ResponseResult<ApAuthor> save(ApAuthor apAuthor) {
                 log.error("参数: {}",apAuthor);
+                log.error("ArticleFeign save 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
+                return ResponseResult.errorResult(AppHttpCodeEnum.REMOTE_SERVER_ERROR);
+            }
+
+            @Override
+            public ResponseResult<ApArticle> findById(Long id) {
+                log.error("参数: {}",id);
                 log.error("ArticleFeign save 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
                 return ResponseResult.errorResult(AppHttpCodeEnum.REMOTE_SERVER_ERROR);
             }

@@ -3,6 +3,7 @@ package com.heima.feigns;
 import com.heima.config.HeimaFeignAutoConfiguration;
 import com.heima.feigns.fallback.ArticleFeignFallback;
 import com.heima.feigns.fallback.WemediaFeignFallback;
+import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import io.swagger.annotations.ApiOperation;
@@ -32,4 +33,9 @@ public interface ArticleFeign {
     public ResponseResult<ApAuthor> findByUserId(@PathVariable("userId") Integer userId);
     @PostMapping("/api/v1/author/save")
     public ResponseResult<ApAuthor> save(@RequestBody ApAuthor apAuthor);
+
+    @GetMapping("/api/v1/article/findById/{id}")
+    public ResponseResult<ApArticle> findById(@PathVariable("id") Long id);
+
+
 }

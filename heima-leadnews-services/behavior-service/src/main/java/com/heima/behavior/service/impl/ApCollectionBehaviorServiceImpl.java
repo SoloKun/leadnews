@@ -1,5 +1,6 @@
 package com.heima.behavior.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.heima.behavior.service.ApBehaviorEntryService;
 import com.heima.behavior.service.ApCollectionBehaviorService;
 import com.heima.common.exception.CustException;
@@ -8,8 +9,12 @@ import com.heima.model.behavior.pojos.ApBehaviorEntry;
 import com.heima.model.behavior.pojos.ApCollection;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.constants.article.HotArticleConstants;
+import com.heima.model.mess.app.NewBehaviorDTO;
 import com.heima.model.threadlocal.AppThreadLocalUtils;
 import com.heima.model.user.pojos.ApUser;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -28,12 +33,14 @@ import java.util.Date;
  * @Version 1.0
  */
 @Service
+@Slf4j
 public class ApCollectionBehaviorServiceImpl implements ApCollectionBehaviorService {
     @Autowired
     ApBehaviorEntryService apBehaviorEntryService;
     @Autowired
     MongoTemplate mongoTemplate;
-
+    @Autowired
+    RabbitTemplate rabbitTemplate;
     @Override
     public ResponseResult collectBehavior(CollectionBehaviorDTO dto) {
         ApUser user = AppThreadLocalUtils.getUser();
@@ -64,7 +71,13 @@ public class ApCollectionBehaviorServiceImpl implements ApCollectionBehaviorServ
                 CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"收藏记录不存在");
             }
             mongoTemplate.remove(query,ApCollection.class);
-            //todo 发送es消息
+            NewBehaviorDTO mess = new NewBehaviorDTO();
+            mess.setArticleId(articleId);
+            mess.setType(NewBehaviorDTO.BehaviorType.COLLECTION);
+            mess.setAdd(-1);
+            rabbitTemplate.convertAndSend(HotArticleConstants.HOT_ARTICLE_SCORE_BEHAVIOR_QUEUE,
+                    JSON.toJSONString(mess));
+            log.info("发送mq消息:{}",JSON.toJSONString(mess));
             return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
         }else{//收藏
             if(apCollection!=null){
@@ -76,7 +89,14 @@ public class ApCollectionBehaviorServiceImpl implements ApCollectionBehaviorServ
             apCollection.setType(type);
             apCollection.setCollectionTime(new Date());
             mongoTemplate.insert(apCollection);
-            //todo 发送es消息
+            //将行为同步到mq中
+            NewBehaviorDTO mess = new NewBehaviorDTO();
+            mess.setArticleId(articleId);
+            mess.setType(NewBehaviorDTO.BehaviorType.COLLECTION);
+            mess.setAdd(1);
+            rabbitTemplate.convertAndSend(HotArticleConstants.HOT_ARTICLE_SCORE_BEHAVIOR_QUEUE,
+                    JSON.toJSONString(mess));
+            log.info("发送mq消息:{}",JSON.toJSONString(mess));
             return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
         }
     }

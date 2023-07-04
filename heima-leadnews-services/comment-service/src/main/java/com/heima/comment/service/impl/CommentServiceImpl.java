@@ -1,5 +1,6 @@
 package com.heima.comment.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.heima.aliyun.scan.GreenTextScan;
 import com.heima.comment.service.CommentHotService;
 import com.heima.comment.service.CommentService;
@@ -16,10 +17,16 @@ import com.heima.model.comment.pojos.ApCommentLike;
 import com.heima.model.comment.vos.ApCommentVo;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.constants.article.HotArticleConstants;
+import com.heima.model.mess.app.NewBehaviorDTO;
 import com.heima.model.threadlocal.AppThreadLocalUtils;
 import com.heima.model.user.pojos.ApUser;
 import com.heima.utils.common.SensitiveWordUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -58,48 +65,52 @@ public class CommentServiceImpl implements CommentService {
     MongoTemplate mongoTemplate;
     @Autowired
     private CommentHotService commentHotService;
+    @Autowired
+    RedissonClient redisClient;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     @Override
     public ResponseResult saveComment(CommentSaveDTO dto) {
         ApUser user = AppThreadLocalUtils.getUser();
-        if(user == null){
-            CustException.cust(AppHttpCodeEnum.NEED_LOGIN,"请先登录");
+        if (user == null) {
+            CustException.cust(AppHttpCodeEnum.NEED_LOGIN, "请先登录");
         }
         Integer userId = user.getId();
-        if(userId==0){
-            CustException.cust(AppHttpCodeEnum.NEED_LOGIN,"请先登录");
+        if (userId == 0) {
+            CustException.cust(AppHttpCodeEnum.NEED_LOGIN, "请先登录");
         }
-        ResponseResult<List<String>> lists =adminFeign.selectAllSensitives();
-        if(!lists.checkCode()){
-            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR,"远程获取敏感词失败");
+        ResponseResult<List<String>> lists = adminFeign.selectAllSensitives();
+        if (!lists.checkCode()) {
+            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR, "远程获取敏感词失败");
         }
         SensitiveWordUtil.initMap(lists.getData());
         Map<String, Integer> map = SensitiveWordUtil.matchWords(dto.getContent());
-        if(map!=null&&map.size()>0){
-            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW,"评论内容包含敏感词"+map.keySet());
+        if (map != null && map.size() > 0) {
+            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW, "评论内容包含敏感词" + map.keySet());
         }
         String content = dto.getContent();
-        try{
+        try {
             Map resultMap = greenTextScan.greenTextScan(content);
             String suggestion = (String) resultMap.get("suggestion");
-            if("block".equals(suggestion)){
+            if ("block".equals(suggestion)) {
                 content = (String) resultMap.get("filteredContent");
             }
 
 
         } catch (Exception e) {
             e.printStackTrace();
-            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR,"远程调用失败");
+            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR, "远程调用失败");
         }
-        if(StringUtils.isEmpty(content)){
-            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW,"评论内容不合法");
+        if (StringUtils.isEmpty(content)) {
+            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW, "评论内容不合法");
         }
         ResponseResult<ApUser> apUserResult = userFeign.findUserById(userId);
-        if(!apUserResult.checkCode()){
-            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR,"远程调用失败");
+        if (!apUserResult.checkCode()) {
+            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR, "远程调用失败");
         }
-        ResponseResult<ApArticle> apArticleResult=articleFeign.findById(dto.getArticleId());
-        if(!apArticleResult.checkCode()){
-            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR,"远程调用失败");
+        ResponseResult<ApArticle> apArticleResult = articleFeign.findById(dto.getArticleId());
+        if (!apArticleResult.checkCode()) {
+            CustException.cust(AppHttpCodeEnum.REMOTE_SERVER_ERROR, "远程调用失败");
         }
         ApUser wholeUser = apUserResult.getData();
         //这里获取的是当前用户的信息，但是这里的信息不全，只有id，没有其他的信息
@@ -124,10 +135,16 @@ public class CommentServiceImpl implements CommentService {
         apComment.setCreatedTime(new Date());
         apComment.setUpdatedTime(new Date());
         mongoTemplate.insert(apComment);
-        //todo 发送 HOT_ARTICLE_SCORE_BEHAVIOR_QUEUE
+        //发送 HOT_ARTICLE_SCORE_BEHAVIOR_QUEUE
+        NewBehaviorDTO newBehaviorDTO = new NewBehaviorDTO();
+        newBehaviorDTO.setArticleId(dto.getArticleId());
+        newBehaviorDTO.setType(NewBehaviorDTO.BehaviorType.COMMENT);
+        newBehaviorDTO.setAdd(1);
+        rabbitTemplate.convertAndSend(HotArticleConstants.HOT_ARTICLE_SCORE_BEHAVIOR_QUEUE,
+                JSON.toJSONString(newBehaviorDTO));
+
 
         return ResponseResult.okResult();
-
 
 
     }
@@ -136,55 +153,64 @@ public class CommentServiceImpl implements CommentService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseResult like(CommentLikeDTO dto) {
         ApUser user = AppThreadLocalUtils.getUser();
-        if(user == null){
-            CustException.cust(AppHttpCodeEnum.NEED_LOGIN,"请先登录");
+        if (user == null) {
+            CustException.cust(AppHttpCodeEnum.NEED_LOGIN, "请先登录");
         }
         Integer userId = user.getId();
-        if(userId==0){
-            CustException.cust(AppHttpCodeEnum.NEED_LOGIN,"请先登录");
-        }
+
         String commentId = dto.getCommentId();
         Query query = Query.query(Criteria.where("id").is(commentId));
-        ApComment apComment = mongoTemplate.findOne(query, ApComment.class);
-        if(apComment==null){
-            CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"评论不存在");
-        }
-        //todo 异步 引入redis分布式锁
-        ApCommentLike apCommentLike = mongoTemplate.findOne(Query.query(Criteria.where("commentId").is(commentId)
-                .and("authorId").is(userId)), ApCommentLike.class);
-        Short operation = dto.getOperation();
-        Integer lastLikes = apComment.getLikes();
-        if(operation.intValue()==0){
-            //判断是否重复点赞
-            if(apCommentLike!=null){
-                CustException.cust(AppHttpCodeEnum.DATA_EXIST,"不能重复点赞");
+        Map<String, Object> map = new HashMap<>(1);
+        //异步 引入redis分布式锁
+        RLock lock = redisClient.getLock("likes-comment");
+        lock.lock();
+        Integer lastLikes = 0;
+        try {
+            ApComment apComment = mongoTemplate.findOne(query, ApComment.class);
+            if (apComment == null) {
+                CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST, "评论不存在");
             }
-            apCommentLike = new ApCommentLike();
-            apCommentLike.setCommentId(commentId);
-            apCommentLike.setOperation(operation);
-            apCommentLike.setAuthorId(userId);
-            mongoTemplate.insert(apCommentLike);
-            apComment.setLikes(apComment.getLikes()+1);
-            mongoTemplate.save(apComment);
-            //todo 点赞>10 作为热点评论
-            commentHotService.hotCommentExecutor(apComment);
+
+
             lastLikes = apComment.getLikes();
-        }else{
-            if(apCommentLike==null){
-                CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"不能重复取消点赞");
+
+            ApCommentLike apCommentLike = mongoTemplate.findOne(Query.query(Criteria.where("commentId").is(commentId)
+                    .and("authorId").is(userId)), ApCommentLike.class);
+            Short operation = dto.getOperation();
+
+            if (operation.intValue() == 0) {
+                // 判断是否重复点赞
+                if (apCommentLike != null) {
+                    CustException.cust(AppHttpCodeEnum.DATA_EXIST, "不能重复点赞");
+                }
+                apCommentLike = new ApCommentLike();
+                apCommentLike.setCommentId(commentId);
+                apCommentLike.setOperation(operation);
+                apCommentLike.setAuthorId(userId);
+                mongoTemplate.insert(apCommentLike);
+                apComment.setLikes(lastLikes + 1);
+                mongoTemplate.save(apComment);
+                //todo 点赞>10 作为热点评论
+                commentHotService.hotCommentExecutor(apComment);
+            } else {
+                if (apCommentLike == null) {
+                    CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST, "不能重复取消点赞");
+                }
+                mongoTemplate.remove(apCommentLike);
+                Integer like = apComment.getLikes();
+                if (like > 1) {
+                    apComment.setLikes(like - 1);
+                } else {
+                    apComment.setLikes(0);
+                }
+                mongoTemplate.save(apComment);
+                lastLikes = apComment.getLikes();
             }
-            mongoTemplate.remove(apCommentLike);
-            Integer like = apComment.getLikes();
-            if(like>1){
-                apComment.setLikes(like-1);
-            }else{
-                apComment.setLikes(0);
-            }
-            mongoTemplate.save(apComment);
-            lastLikes = apComment.getLikes();
+        } finally {
+            lock.unlock();
         }
-        Map<String,Object> map = new HashMap<>(1);
-        map.put("likes",lastLikes);
+
+        map.put("likes", lastLikes);
         return ResponseResult.okResult(map);
 
     }
@@ -192,45 +218,45 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public ResponseResult loadComment(CommentDTO dto) {
         List<ApComment> commentList = new ArrayList<>();
-        if(dto.getSize()==null||dto.getSize()==0){
+        if (dto.getSize() == null || dto.getSize() == 0) {
             dto.setSize(10);
         }
         long articleId = dto.getArticleId();
         Date minDate = dto.getMinDate();
         Short index = dto.getIndex();
-        if(index.intValue()==1){
+        if (index.intValue() == 1) {
             //查询热门评论
             Query query = Query.query(Criteria.where("articleId").is(articleId)
-                    .and("flag").is((short) 1)
-                    .and("updatedTime").lt(minDate))
-                    .with(Sort.by(Sort.Direction.DESC,"likes"))
-                    .with(Sort.by(Sort.Direction.DESC,"updatedTime"));
+                            .and("flag").is((short) 1)
+                            .and("updatedTime").lt(minDate))
+                    .with(Sort.by(Sort.Direction.DESC, "likes"))
+                    .with(Sort.by(Sort.Direction.DESC, "updatedTime"));
             List<ApComment> hotCommentList = mongoTemplate.find(query, ApComment.class);
-            if(hotCommentList!=null&&hotCommentList.size()>5){
-                CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"热评数量超过5条");
+            if (hotCommentList != null && hotCommentList.size() > 5) {
+                CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST, "热评数量超过5条");
             }
-            dto.setSize(dto.getSize()-hotCommentList.size());
+            dto.setSize(dto.getSize() - hotCommentList.size());
 
             Query query1 = Query.query(Criteria.where("articleId").is(articleId)
-                    .and("flag").is((short)0)
-                    .and("updatedTime").lt(minDate))
-                    .with(Sort.by(Sort.Direction.DESC,"likes"))
-                    .with(Sort.by(Sort.Direction.DESC,"updatedTime"));
+                            .and("flag").is((short) 0)
+                            .and("updatedTime").lt(minDate))
+                    .with(Sort.by(Sort.Direction.DESC, "likes"))
+                    .with(Sort.by(Sort.Direction.DESC, "updatedTime"));
 
             Pageable pageable = PageRequest.of(0, dto.getSize());
             query1.with(pageable);
             List<ApComment> commonComments = mongoTemplate.find(query1, ApComment.class);
             commentList.addAll(hotCommentList);
             commentList.addAll(commonComments);
-        }else{
+        } else {
             //查询更多评论
             Query query1 = Query.query(Criteria.where("articleId").is(articleId)
-                    .and("flag").is((short)0)
-                    .and("update_time").lt(minDate))
-                    .with(Sort.by(Sort.Direction.DESC,"likes"))
-                    .with(Sort.by(Sort.Direction.DESC,"updatedTime"));
+                            .and("flag").is((short) 0)
+                            .and("update_time").lt(minDate))
+                    .with(Sort.by(Sort.Direction.DESC, "likes"))
+                    .with(Sort.by(Sort.Direction.DESC, "updatedTime"));
 
-            Pageable pageable = PageRequest.of(index-1, dto.getSize());
+            Pageable pageable = PageRequest.of(index - 1, dto.getSize());
             query1.with(pageable);
             List<ApComment> commonComments = mongoTemplate.find(query1, ApComment.class);
             commentList.addAll(commonComments);
@@ -238,11 +264,11 @@ public class CommentServiceImpl implements CommentService {
 
         ApUser user = AppThreadLocalUtils.getUser();
         //未登录直接返回
-        if(user==null){
+        if (user == null) {
             return ResponseResult.okResult(commentList);
         }
         //登录了，查询用户是否点赞
-        List<ApCommentVo>commentVoList = new ArrayList<>();
+        List<ApCommentVo> commentVoList = new ArrayList<>();
         List<String> commentIds = commentList.stream()
                 .map(ApComment::getId)
                 .collect(Collectors.toList());
@@ -252,10 +278,10 @@ public class CommentServiceImpl implements CommentService {
         commentList.forEach(
                 apComment -> {
                     ApCommentVo apCommentVo = new ApCommentVo();
-                    BeanUtils.copyProperties(apComment,apCommentVo);
-                    if(apCommentLikes.size()>0){
-                        for(ApCommentLike apCommentLike:apCommentLikes){
-                            if(apCommentLike.getCommentId().equals(apComment.getId())){
+                    BeanUtils.copyProperties(apComment, apCommentVo);
+                    if (apCommentLikes.size() > 0) {
+                        for (ApCommentLike apCommentLike : apCommentLikes) {
+                            if (apCommentLike.getCommentId().equals(apComment.getId())) {
                                 apCommentVo.setOperation((short) 0);
                                 break;
                             }

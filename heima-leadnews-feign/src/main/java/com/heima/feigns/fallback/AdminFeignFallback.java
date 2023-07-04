@@ -37,6 +37,12 @@ public class AdminFeignFallback implements FallbackFactory<AdminFeign> {
                 log.error("AdminFeign findOne 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
                 return ResponseResult.errorResult(AppHttpCodeEnum.REMOTE_SERVER_ERROR);
             }
+
+            @Override
+            public ResponseResult<List<AdChannel>> selectChannels() {
+                log.error("AdminFeign selectChannels 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
+                return ResponseResult.errorResult(AppHttpCodeEnum.REMOTE_SERVER_ERROR);
+            }
         };
     }
 }

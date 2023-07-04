@@ -1,4 +1,4 @@
-package com.heima.article.config;
+package com.heima.article.listen;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.article.mapper.ApArticleConfigMapper;

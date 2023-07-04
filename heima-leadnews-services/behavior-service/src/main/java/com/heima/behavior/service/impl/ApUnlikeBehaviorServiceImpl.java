@@ -8,8 +8,11 @@ import com.heima.model.behavior.pojos.ApBehaviorEntry;
 import com.heima.model.behavior.pojos.ApUnlikesBehavior;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.mess.app.NewBehaviorDTO;
 import com.heima.model.threadlocal.AppThreadLocalUtils;
 import com.heima.model.user.pojos.ApUser;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -28,11 +31,13 @@ import java.util.Date;
  * @Version 1.0
  */
 @Service
+@Slf4j
 public class ApUnlikeBehaviorServiceImpl implements ApUnlikeBehaviorService {
     @Autowired
     ApBehaviorEntryService apBehaviorEntryService;
     @Autowired
     MongoTemplate mongoTemplate;
+
     @Override
     public ResponseResult unlikeBehavior(UnLikesBehaviorDTO dto) {
         ApUser user = AppThreadLocalUtils.getUser();
@@ -68,6 +73,8 @@ public class ApUnlikeBehaviorServiceImpl implements ApUnlikeBehaviorService {
             apUnlikesBehavior.setType(type);
             apUnlikesBehavior.setCreatedTime(new Date());
             mongoTemplate.insert(apUnlikesBehavior);
+
+
             return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
         }else{
             if(apUnlikesBehavior==null){

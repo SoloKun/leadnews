@@ -12,6 +12,7 @@
         <module>aliyun-green-demo</module>
         <module>freemaker-demo</module>
         <module>mongodb-test</module>
+        <module>xxlJobTest</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>heima-leadnews-test</artifactId>

@@ -1,4 +1,4 @@
-package com.heima.article.config;
+package com.heima.article.listen;
 
 import com.heima.article.service.ApArticleService;
 import com.heima.article.service.impl.ApArticleServiceImpl;

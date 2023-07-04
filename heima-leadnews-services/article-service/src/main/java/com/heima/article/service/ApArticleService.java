@@ -8,5 +8,7 @@ import com.heima.model.common.dtos.ResponseResult;
 
 public interface ApArticleService extends IService<ApArticle> {
     public void publishArticle(Integer newsId);
-    ResponseResult load(Short loadtype, ArticleHomeDTO dto);
+    public ResponseResult load(Short loadtype, ArticleHomeDTO dto);
+
+    public ResponseResult load2(Short loadtypeLoadMore, ArticleHomeDTO dto,boolean firstPage);
 }

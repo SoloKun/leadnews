@@ -18,6 +18,17 @@
     </properties>
 
     <dependencies>
+        <!--redis-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!--xxl-job-->
+        <dependency>
+            <groupId>com.heima</groupId>
+            <artifactId>heima-schedule-spring-boot-starter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- 文件存储 starter 依赖 -->
         <dependency>
             <groupId>com.heima</groupId>

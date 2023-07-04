@@ -47,4 +47,16 @@
         order by aa.publish_time desc
         limit #{dto.size}
     </select>
+
+    <select id="selectArticleByDate" resultMap="resultMap">
+        select aa.*
+        from
+        ap_article aa
+        left join ap_article_config aac on aa.id = aac.article_id
+        where
+            aac.is_delete != 1 and aac.is_down != 1
+            and aa.created_time <![CDATA[>]]> #{beginDate}
+
+    </select>
+
 </mapper>

@@ -5,6 +5,7 @@ import com.heima.model.article.dtos.ArticleHomeDTO;
 import com.heima.model.article.pojos.ApArticle;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -18,4 +19,7 @@ public interface ApArticleMapper extends BaseMapper<ApArticle> {
      */
     public List<ApArticle> loadArticleList(@Param("dto") ArticleHomeDTO dto, @Param("type") Short type);
 
+
+
+    public List<ApArticle> selectArticleByDate(@Param("beginDate") String beginDate);
 }

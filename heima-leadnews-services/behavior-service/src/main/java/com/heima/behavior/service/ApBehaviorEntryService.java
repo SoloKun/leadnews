@@ -19,4 +19,7 @@ public interface ApBehaviorEntryService {
      * @return
      */
     ApBehaviorEntry findByUserIdOrEquipmentId(Integer userId, Integer equipmentId);
+
+
+
 }

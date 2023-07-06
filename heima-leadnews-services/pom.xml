@@ -14,6 +14,8 @@
         <module>article-service</module>
         <module>behavior-service</module>
         <module>comment-service</module>
+        <module>data-sync-service</module>
+        <module>search-service</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 

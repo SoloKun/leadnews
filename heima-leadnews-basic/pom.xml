@@ -13,6 +13,7 @@
         <module>heima-file-spring-boot-starter</module>
         <module>heima-aliyunsecurity-spring-boot-starter</module>
         <module>heima-schedule-spring-boot-starter</module>
+        <module>heima-es-spring-boot-starter</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>heima-leadnews-basic</artifactId>

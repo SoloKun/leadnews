@@ -20,10 +20,12 @@ import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.constants.article.ArticleConstants;
+import com.heima.model.constants.message.NewsUpOrDownConstants;
 import com.heima.model.constants.wemedia.WemediaConstants;
 import com.heima.model.wemedia.pojos.WmNews;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,8 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
     private WemediaFeign wemediaFeign;
     @Autowired
     private GeneratePageServiceImpl generatePageService;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     @GlobalTransactional(rollbackFor = Exception.class,timeoutMills = 300000)
     @Override
     public void publishArticle(Integer newsId) {
@@ -62,7 +66,11 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         //更新wmNews
         updateWmNews(newsId, wmNews, apArticle);
         // CustException.cust(AppHttpCodeEnum.SUCCESS); 测试全局事务
-        //TODO 通知es索引库添加文章索引 
+        //通知es索引库添加文章索引
+
+        rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_FOR_ES_QUEUE,
+                apArticle.getId());
+
     }
 
     /**
@@ -129,6 +137,20 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
             }
         }
         return load(loadtypeLoadMore,dto);
+    }
+
+    @Override
+    public ResponseResult getById(Integer articleId) {
+        if(articleId==null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        ApArticle apArticle = apArticleMapper.selectById(articleId);
+        if(apArticle==null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST);
+        }
+        ResponseResult responseResult = ResponseResult.okResult(apArticle);
+        responseResult.setHost(webSite);
+        return responseResult;
     }
 
     private void praseArticle(ApArticle apArticle) {

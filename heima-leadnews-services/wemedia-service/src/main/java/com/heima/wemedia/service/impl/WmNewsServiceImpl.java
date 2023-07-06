@@ -143,15 +143,15 @@ public class WmNewsServiceImpl  extends ServiceImpl<WmNewsMapper, WmNews> implem
         if(WemediaConstants.WM_NEWS_DRAFT_STATUS.equals(wmNews.getStatus())){
             return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
         }
-        // TODO 3.1 抽取文章中关联的图片路径
+        //  3.1 抽取文章中关联的图片路径
         List<String> contentImages = parseContentImages(dto.getContent());
-        // TODO 3.2 关联文章内容中的图片和素材关系
+        //  3.2 关联文章内容中的图片和素材关系
         if(!CollectionUtils.isEmpty(contentImages)) {
             saveRelativeInfo(contentImages,wmNews.getId(),WemediaConstants.WM_CONTENT_REFERENCE);
         }
-        // TODO 3.3 关联文章封面中的图片和素材关系  封面可能是选择自动或者是无图
+        // 3.3 关联文章封面中的图片和素材关系  封面可能是选择自动或者是无图
         saveRelativeInfoForCover(dto,contentImages, wmNews);
-        // TODO 3.4 发送消息给文章审核微服务
+        // 3.4 发送消息给文章审核微服务
 
         rabbitTemplate.convertAndSend(NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_QUEUE,wmNews.getId());
         log.info("发送消息给文章审核微服务，文章id:{}",wmNews.getId());
@@ -223,7 +223,7 @@ public class WmNewsServiceImpl  extends ServiceImpl<WmNewsMapper, WmNews> implem
             CustException.cust(AppHttpCodeEnum.PARAM_INVALID,"文章未发布，不能上架或下架");
         }
 
-        //TODO 同步状态到app端
+        //同步状态到app端
         update(Wrappers.<WmNews>lambdaUpdate().eq(WmNews::getId,dto.getId())
                 .set(WmNews::getEnable,dto.getEnable()));
         //这里和updateById的区别是，updateById不会更新null值，而这里会更新null值
@@ -231,6 +231,8 @@ public class WmNewsServiceImpl  extends ServiceImpl<WmNewsMapper, WmNews> implem
         if(dto.getEnable().equals(WemediaConstants.WM_NEWS_UP)){
             rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_OR_DOWN_EXCHANGE,
                     NewsUpOrDownConstants.NEWS_UP_ROUTE_KEY,wmNews.getArticleId());
+
+
         }else{
             rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_OR_DOWN_EXCHANGE,
                     NewsUpOrDownConstants.NEWS_DOWN_ROUTE_KEY,wmNews.getArticleId());

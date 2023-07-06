@@ -6,6 +6,7 @@ import com.heima.feigns.fallback.WemediaFeignFallback;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.search.vos.SearchArticleVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -37,5 +38,7 @@ public interface ArticleFeign {
     @GetMapping("/api/v1/article/findById/{id}")
     public ResponseResult<ApArticle> findById(@PathVariable("id") Long id);
 
+    @GetMapping("/api/v1/article/{id}")
+    ResponseResult<SearchArticleVO> findArticle(@PathVariable("id") Long id);
 
 }
